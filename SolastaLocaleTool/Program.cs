@@ -8,6 +8,8 @@ namespace SolastaLocaleTool
 {
     class Program
     {
+        const string I2LANGUAGES_ASSET_NAME = "I2Languages";
+
         static void Main(string[] args)
         {
             if (args.Length < 3)
@@ -36,22 +38,23 @@ namespace SolastaLocaleTool
         {
             using (var af = AssetsFile.Open(args[1]))
             {
-                af.GetAssetByName()
+                var asset = af.GetAssetByName(I2LANGUAGES_ASSET_NAME);
             }
         }
 
         static void Import(string[] args)
         {
-
+            using (var af = AssetsFile.Open(args[1]))
+            {
+                // TODO
+            }
         }
 
         static void PrintUsageAndExit()
         {
-            Console.WriteLine("usage: SolastaLocaleTool.exe export resource.assets csv_path");
-            Console.WriteLine("usage: SolastaLocaleTool.exe import resource.assets csv_path resource.assets.new");
+            Console.WriteLine("usage: SolastaLocaleTool.exe export resource.assets csv_output_path.csv");
+            Console.WriteLine("usage: SolastaLocaleTool.exe import resource.assets csv_input_path.csv output_resource.assets");
             Environment.Exit(1);
         }
-
-
     }
 }

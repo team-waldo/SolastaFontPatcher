@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 
-using SolastaFontPatcher.Properties;
-
 using UnityAssetLib;
 using UnityAssetLib.Serialization;
 using UnityAssetLib.Types;
@@ -48,9 +46,9 @@ namespace SolastaFontPatcher
                     return false;
                 }
 
-                var boldPathId = ReplaceFont(sharedassets0, "Noto-Bold SDF", Resources.bold_font, Resources.bold_texture);
-                var regularPathid = ReplaceFont(sharedassets0, "Noto-Regular SDF", Resources.regular_font, Resources.regular_texture);
-                var lightPathid = ReplaceFont(sharedassets0, "Noto-Thin SDF", Resources.light_font, Resources.light_texture);
+                var boldPathId = ReplaceFont(sharedassets0, "Noto-Bold SDF", "Data/bold_font.dat", "Data/bold_texture.bin");
+                var regularPathid = ReplaceFont(sharedassets0, "Noto-Regular SDF", "Data/regular_font.dat", "Data/regular_texture.bin");
+                var lightPathid = ReplaceFont(sharedassets0, "Noto-Thin SDF", "Data/light_font.dat", "Data/light_texture.bin");
 
                 AddFallbackFont(sharedassets0, "LiberationSans SDF", 0, regularPathid);
 
@@ -58,7 +56,7 @@ namespace SolastaFontPatcher
             }
 
             if (File.Exists(sharedassets0_backup))
-                File.Delete(sharedassets0_backup);
+                File.Delete(sharedassets0_backup); // Remove old backup
 
             File.Move(sharedassets0_path, sharedassets0_backup);
             File.Move(sharedassets0_temp, sharedassets0_path);
@@ -66,13 +64,13 @@ namespace SolastaFontPatcher
             return true;
         }
 
-        private long ReplaceFont(AssetsFile af, string fontName, byte[] newFontDef, byte[] newFontTexture)
+        private long ReplaceFont(AssetsFile af, string fontName, string newFontDef, string newFontTexture)
         {
             var fontAssetInfo = af.GetAssetByName(fontName);
             var serializer = new UnitySerializer(af);
 
             var oldFont = serializer.Deserialize<TMP_FontAsset>(fontAssetInfo);
-            var newFont = serializer.Deserialize<TMP_FontAsset>(newFontDef);
+            var newFont = serializer.Deserialize<TMP_FontAsset>(File.ReadAllBytes(newFontDef));
 
             var fontTexturePathId = oldFont.m_AtlasTextures[0].m_PathID;
 
@@ -85,7 +83,7 @@ namespace SolastaFontPatcher
 
             // Write raw texture data to a file
             var fontTextureDataPath = GetDataFilePath(newFont.m_Name + " Texture.bin");
-            File.WriteAllBytes(fontTextureDataPath, newFontTexture);
+            File.Copy(newFontTexture, fontTextureDataPath, overwrite: true);
 
             // Update font texture info
             var texture = serializer.Deserialize<Texture2D>(af.assets[fontTexturePathId]);
@@ -96,7 +94,7 @@ namespace SolastaFontPatcher
             texture.imageData = new byte[0];
 
             texture.m_StreamData.offset = 0;
-            texture.m_StreamData.size = (uint)newFontTexture.Length;
+            texture.m_StreamData.size = (uint)(newFont.m_AtlasWidth * newFont.m_AtlasHeight);
             texture.m_StreamData.path = fontTextureDataPath;
 
             var textureBytes = serializer.Serialize(texture);
